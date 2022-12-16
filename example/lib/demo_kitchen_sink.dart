@@ -108,34 +108,65 @@ class _KitchenSinkDemoState extends State<KitchenSinkDemo> {
 
     return Theme(
       data: ThemeData.dark(),
-      child: GestureDetector(
-        onPanUpdate: _onPanUpdate,
-        child: Container(
-          key: _screenBoundsKey,
-          width: double.infinity,
-          height: double.infinity,
-          color: const Color(0xFF222222),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: _buildInnerBounds(),
-              ),
-              _pinOffset.value != null
-                  ? BuildInOrder(
-                      children: [
-                        _buildPin(),
-                        _buildMenuFollower(),
-                      ],
-                    )
-                  : const SizedBox(),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _buildControls(),
-              ),
-            ],
-          ),
+      child: Container(
+        key: _screenBoundsKey,
+        width: double.infinity,
+        height: double.infinity,
+        color: const Color(0xFF222222),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: _buildInnerBounds(),
+            ),
+            _pinOffset.value != null
+                ? BuildInOrder(
+                    children: [
+                      GestureDetector(
+                        onPanUpdate: _onPanUpdate,
+                        child: _buildPin(),
+                      ),
+                      // This does not work, the gesture detector does not fire :(
+                      GestureDetector(
+                        onPanUpdate: _onPanUpdate,
+                        child: Follower.withOffset(
+                          link: _pinLink,
+                          leaderAnchor: Alignment.bottomLeft,
+                          followerAnchor: Alignment.topRight,
+                          child: ColoredBox(color: Colors.green, child: const _Pin()),
+                        ),
+                      ),
+                      // This works, the gesture detector fires
+                      GestureDetector(
+                        onPanUpdate: _onPanUpdate,
+                        child: AnimatedBuilder(
+                          animation: _pinOffset,
+                          builder: (context, value) {
+                            return Stack(
+                              children: [
+                                Positioned(
+                                  left: _pinOffset.value!.dx + 25,
+                                  top: _pinOffset.value!.dy + 25,
+                                  child: FractionalTranslation(
+                                    translation: const Offset(-0.5, -0.5),
+                                    child: ColoredBox(color: Colors.blue, child: const _Pin()),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      _buildMenuFollower(),
+                    ],
+                  )
+                : const SizedBox(),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _buildControls(),
+            ),
+          ],
         ),
       ),
     );
